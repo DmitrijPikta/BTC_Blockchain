@@ -1,7 +1,9 @@
 package blockchain.BTC_Blockchain;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 
 public class Users {
     private Map<String, User> users = new HashMap<>();
@@ -39,5 +41,18 @@ public class Users {
 
     public boolean contains(String address){
         return users.containsKey(address);
+    }
+
+    public String getAddress(String username){
+        return users.entrySet().stream().filter(u -> u.getValue().getName().equals("Satoshi Nakamoto"))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public String getRandomUserAddress(){
+        Random random = new Random();
+        int index = random.nextInt(users.size());
+        return new ArrayList<>(users.keySet()).get(index);
     }
 }

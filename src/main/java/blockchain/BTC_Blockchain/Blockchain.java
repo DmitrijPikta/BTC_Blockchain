@@ -4,16 +4,18 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.StringJoiner;
 
 public class Blockchain {
-    Blocks blocks = new Blocks();
-    Users users;
-    UTXOMap utxoMap = new UTXOMap();
-    Mempool mempool = new Mempool();
+    private Blocks blocks = new Blocks();
+    private Users users;
+    private UTXOMap utxoMap = new UTXOMap();
+    private Mempool mempool = new Mempool();
 
-    int satoshiInBTC = 100000000;
-    double txFeePercent = 0.5; // %
-    long blockReward = (long)50 * satoshiInBTC;
+    private int satoshiInBTC = 100000000;
+    private double txFeePercent = 0.5; // %
+    private long blockReward = (long)50 * satoshiInBTC;
+    private int txInBlock = 100;
 
     public Blockchain(int usersNumber){
         users = new Users(usersNumber);
@@ -24,7 +26,7 @@ public class Blockchain {
             throw new IllegalArgumentException("Miner address is wrong: where are no such address");
         }
 
-        List<Transaction> transactions = mempool.getTx(100);
+        List<Transaction> transactions = mempool.getTx(txInBlock - 1);
 
         StringBuilder transactionsSummary = new StringBuilder();
         long fee = 0;
@@ -36,7 +38,7 @@ public class Blockchain {
         List<TxOutput> minerOutput = new ArrayList<>();
         minerOutput.add(new TxOutput(minerAddress, fee + blockReward));
         List<TxInput> minerInputs = new ArrayList<>();
-        transactions.addFirst(new Transaction(minerInputs, minerOutput));
+        transactions.addFirst(new Transaction(minerInputs, minerOutput, "0"));
         transactionsSummary.insert(0, transactions.getFirst().getTxid());
 
         HashFunction hashFunction = new HashFunction();
@@ -69,10 +71,37 @@ public class Blockchain {
                 counter++;
             }
         }
-        // delete tx from mempool
+        //-------------------------------
+        StringJoiner blockPrintScreen = new StringJoiner(System.lineSeparator());
+        blockPrintScreen.add("-".repeat(80));
+        blockPrintScreen.add("Block info:");
+        blockPrintScreen.add("Block number:        " + blocks.getBlocksNumber());
+        blockPrintScreen.add("Block hash:          " + blockHash);
+        blockPrintScreen.add("Previous block hash: " + prevBlockHash);
+        blockPrintScreen.add("Timestamp:           " + timestamp);
+        blockPrintScreen.add("Nonce:               " + nonce);
+        blockPrintScreen.add("Difficulty target:   " + difficultyTarget);
+        blockPrintScreen.add("Transactions hash:   " + txHash);
+        blockPrintScreen.add("List of transactions:");
+        int counter = 0;
+        for (Transaction tx : transactions){
+            String senderAddress = tx.getSenderAddress();
+            TxOutput mainOutput = tx.getOutputs().getFirst();
+            String receiverAddress = mainOutput.getAddress();
+            String receiverName = users.getUser(receiverAddress).getName();
+            String senderName;
+            if (senderAddress.equals("0")){
+                senderName = "Coinbase";
+            } else {
+                senderName = users.getUser(senderAddress).getName();
+            }
+            blockPrintScreen.add(counter + ". " + tx.getTxid() + " | " + senderName + " -> " + receiverName + " | "
+                    + mainOutput.getValue() / (double)satoshiInBTC + " BTC");
+            counter++;
+        }
+        blockPrintScreen.add("-".repeat(80));
+        System.out.println(blockPrintScreen);
     }
-
-
 
     public void createTx(String senderAddress, String receiverAddress, double valueBTC){
         if (!users.contains(receiverAddress)){
@@ -116,10 +145,57 @@ public class Blockchain {
             outputs.add(new TxOutput(senderAddress, inputsRemainder));
         }
 
-        mempool.addTx(new Transaction(inputs, outputs));
+        Transaction newTx = new Transaction(inputs, outputs, senderAddress);
+        mempool.addTx(newTx);
+
+        //-----------------------------------------
+
+        StringJoiner txCreatingPrint = new StringJoiner(System.lineSeparator());
+        txCreatingPrint.add("-".repeat(80));
+        txCreatingPrint.add("Transaction info:");
+        txCreatingPrint.add("Transaction hash: " + newTx.getTxid());
+        String senderName = users.getUser(senderAddress).getName();
+        txCreatingPrint.add("Sender: " + senderName);
+        String receiverName = users.getUser(receiverAddress).getName();
+        txCreatingPrint.add("Receiver: " + receiverName);
+        txCreatingPrint.add("Inputs:");
+        for (TxInput input : inputs){
+            txCreatingPrint.add(input.getValue() / (double)satoshiInBTC + " BTC");
+        }
+        txCreatingPrint.add("Outputs:");
+        txCreatingPrint.add("Main: " + outputs.getFirst().getValue() / (double)satoshiInBTC + " BTC");
+        if (outputs.size() > 1) {
+            txCreatingPrint.add("Remainder: " + outputs.getFirst().getValue() / (double) satoshiInBTC + " BTC");
+        }
+        txCreatingPrint.add("-".repeat(80));
+        System.out.println(txCreatingPrint);
     }
 
-    public Users getUsers(){
-        return users;
+    public void transactionGenerating(int txNumberToReach){
+        if (txNumberToReach < 0) {
+            throw new IllegalArgumentException("txNumberToReach can not be negative");
+        }
+        String satoshi = users.getAddress("Satoshi Nakamoto");
+        while(true){
+            mineBlock(satoshi);
+            for (String senderAddress : utxoMap.getUsersAddressesWithUTXO()){
+                String receiverAddress = users.getRandomUserAddress();
+                while(receiverAddress.equals(senderAddress)){
+                    receiverAddress = users.getRandomUserAddress();
+                }
+                double valueBTC = utxoMap.getUTXOSum(senderAddress) / (double)satoshiInBTC / 2;
+                createTx(senderAddress, receiverAddress, valueBTC);
+                if (mempool.getTxNumber() == txNumberToReach){
+                    return;
+                }
+            }
+        }
+    }
+
+    public void autoMining(){
+        String satoshi = users.getAddress("Satoshi Nakamoto");
+        while (mempool.getTxNumber() > 0){
+            mineBlock(satoshi);
+        }
     }
 }

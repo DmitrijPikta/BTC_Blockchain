@@ -26,4 +26,8 @@ public class Blocks {
         }
         return blocks.getLast().getBlockHash();
     }
+
+    public int getBlocksNumber(){
+        return blocks.size();
+    }
 }

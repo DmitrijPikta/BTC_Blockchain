@@ -33,4 +33,8 @@ public class Mempool {
             counter++;
         }
     }
+
+    public int getTxNumber(){
+        return mempool.size();
+    }
 }

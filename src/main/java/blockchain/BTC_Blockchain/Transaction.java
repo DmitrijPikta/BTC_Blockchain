@@ -7,11 +7,13 @@ public class Transaction {
     private String txid;
     private List<TxInput> inputs;
     private List<TxOutput> outputs;
+    private String senderAddress;
     private String timestamp;
 
-    public Transaction(List<TxInput> inputs, List<TxOutput> outputs){
+    public Transaction(List<TxInput> inputs, List<TxOutput> outputs, String senderAddress){
         this.inputs = inputs;
         this.outputs = outputs;
+        this.senderAddress = senderAddress;
 
         StringBuilder hashingString = new StringBuilder();
 
@@ -48,5 +50,9 @@ public class Transaction {
 
     public List<TxOutput> getOutputs(){
         return outputs;
+    }
+
+    public String getSenderAddress() {
+        return senderAddress;
     }
 }

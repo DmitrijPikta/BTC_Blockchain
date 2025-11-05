@@ -4,7 +4,6 @@ public class UTXO {
     private String txId;
     private int vout;   //index of output in transaction
     private long value;  //in satoshi
-    //private boolean reserved = false;
 
     public UTXO(String txId, int vout, long value){
         if (vout < 0 || value <= 0){
