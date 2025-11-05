@@ -44,7 +44,7 @@ public class Users {
     }
 
     public String getAddress(String username){
-        return users.entrySet().stream().filter(u -> u.getValue().getName().equals("Satoshi Nakamoto"))
+        return users.entrySet().stream().filter(u -> u.getValue().getName().equals(username))
                 .map(Map.Entry::getKey)
                 .findFirst()
                 .orElse(null);

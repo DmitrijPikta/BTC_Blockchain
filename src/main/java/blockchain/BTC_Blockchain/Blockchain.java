@@ -184,6 +184,9 @@ public class Blockchain {
                     receiverAddress = users.getRandomUserAddress();
                 }
                 double valueBTC = utxoMap.getUTXOSum(senderAddress) / (double)satoshiInBTC / 2;
+                if (valueBTC == 0){
+                    continue;
+                }
                 createTx(senderAddress, receiverAddress, valueBTC);
                 if (mempool.getTxNumber() == txNumberToReach){
                     return;
