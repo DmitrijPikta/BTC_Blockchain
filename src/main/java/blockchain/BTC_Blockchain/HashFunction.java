@@ -15,6 +15,10 @@ public class HashFunction {
         return hashString(data, salt);
     }
 
+    public String hashString(String input){
+        return hashString(input, "");
+    }
+
     public String hashString(String input, String salt){
         input += salt;
         if (input.isEmpty()){
