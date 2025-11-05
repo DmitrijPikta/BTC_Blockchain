@@ -111,7 +111,7 @@ public class Blockchain {
             throw new IllegalArgumentException("Value must be positive number");
         }
         long valueSatoshi = (long)(valueBTC * satoshiInBTC);
-        long valueWithFeeSatoshi = (long)(valueSatoshi + (double)valueSatoshi / 100 * txFeePercent);
+        long valueWithFeeSatoshi = valueSatoshi + (long)(valueSatoshi / (double)100 * txFeePercent);
 
         List<UTXO> usersUTXO = utxoMap.getUsersUTXO(senderAddress);
 
@@ -165,13 +165,13 @@ public class Blockchain {
         txCreatingPrint.add("Outputs:");
         txCreatingPrint.add("Main: " + outputs.getFirst().getValue() / (double)satoshiInBTC + " BTC");
         if (outputs.size() > 1) {
-            txCreatingPrint.add("Remainder: " + outputs.getFirst().getValue() / (double) satoshiInBTC + " BTC");
+            txCreatingPrint.add("Remainder: " + outputs.get(1).getValue() / (double)satoshiInBTC + " BTC");
         }
         txCreatingPrint.add("-".repeat(80));
         System.out.println(txCreatingPrint);
     }
 
-    public void transactionGenerating(int txNumberToReach){
+    public void generateTransaction(int txNumberToReach){
         if (txNumberToReach < 0) {
             throw new IllegalArgumentException("txNumberToReach can not be negative");
         }

@@ -24,7 +24,7 @@ public class Main {
         }
         scanner.nextLine();
 
-        blockchain.transactionGenerating(txNumberToReach);
+        blockchain.generateTransaction(txNumberToReach);
         System.out.println("Press enter to continue");
         scanner.nextLine();
         blockchain.autoMining();
