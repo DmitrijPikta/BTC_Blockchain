@@ -12,8 +12,8 @@ public class Main {
         while(true) {
             try {
                 txNumberToReach = scanner.nextInt();
-                if (txNumberToReach < 0) {
-                    System.out.println("Number can not be negative. Try once again");
+                if (txNumberToReach <= 0) {
+                    System.out.println("Number must be positive. Try once again");
                     continue;
                 }
                 break;
