@@ -9,11 +9,11 @@ public class Blocks {
     public void addNewBlock(Block newBlock){
         int blocksSize = blocks.size();
         if (blocksSize > 0){
-            if (!getLastBlockHash().equals(newBlock.prevBlockHash)){
+            if (!getLastBlockHash().equals(newBlock.getPrevBlockHash())){
                 throw new IllegalArgumentException("New block is not accepted: previous block hash is wrong");
             }
         } else {
-            if (!newBlock.prevBlockHash.isEmpty()){
+            if (!newBlock.getPrevBlockHash().isEmpty()){
                 throw new IllegalArgumentException("New block is not accepted: previous block hash for first block should be empty");
             }
         }

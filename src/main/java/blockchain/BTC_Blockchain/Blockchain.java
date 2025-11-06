@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringJoiner;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Blockchain {
     private Blocks blocks = new Blocks();
@@ -21,28 +24,63 @@ public class Blockchain {
         users = new Users(usersNumber);
     }
 
-    public void mineBlock(String minerAddress){
+    public void mineBlock(String minerAddress) {
+        Block newBlock;
+        try {
+            newBlock = getBlock(minerAddress, false);
+        } catch (InterruptedException e){
+            return;
+        }
+        verifyBlock(newBlock);
+    }
+
+    public void mineBlock(List<String> addresses){
+        if (addresses == null || addresses.isEmpty()){
+            throw new IllegalArgumentException("Addresses can not be empty");
+        }
+        ExecutorService executor = Executors.newFixedThreadPool(
+                Math.min(addresses.size(), Runtime.getRuntime().availableProcessors())
+        );
+
+        List<Callable<Block>> tasks = new ArrayList<>();
+        for (String address : addresses){
+            tasks.add(() -> getBlock(address, true));
+        }
+        Block minedBlock;
+        try{
+            minedBlock = executor.invokeAny(tasks);
+
+        } catch (Exception e){
+            e.printStackTrace();
+            return;
+        } finally {
+            executor.shutdownNow();
+        }
+        if (minedBlock == null){
+            throw new RuntimeException("Block was not mined");
+        }
+        verifyBlock(minedBlock);
+    }
+
+    public Block getBlock(String minerAddress, boolean parallel) throws InterruptedException {
         if (!users.contains(minerAddress)){
             throw new IllegalArgumentException("Miner address is wrong: where are no such address");
         }
 
         List<Transaction> transactions = mempool.getTx(txInBlock - 1);
 
-        //StringBuilder transactionsSummary = new StringBuilder();
         long fee = 0;
         for (Transaction tx : transactions){
             fee += tx.getFee();
-            //transactionsSummary.append(tx.getTxid());
         }
         // create tx for miner reward
         List<TxOutput> minerOutput = new ArrayList<>();
         minerOutput.add(new TxOutput(minerAddress, fee + blockReward));
         List<TxInput> minerInputs = new ArrayList<>();
         transactions.addFirst(new Transaction(minerInputs, minerOutput, "0"));
-        //transactionsSummary.insert(0, transactions.getFirst().getTxid());
+
 
         HashFunction hashFunction = new HashFunction();
-        //String txHash = hashFunction.hashString(transactionsSummary.toString());
         MerkleTree merkleTree = new MerkleTree();
         String txHash = merkleTree.getRootHash(transactions);
         String prevBlockHash = blocks.getLastBlockHash();
@@ -57,10 +95,25 @@ public class Blockchain {
         while(!blockHash.startsWith("0".repeat(difficultyTarget))){
             nonce = random.nextInt();
             blockHash = hashFunction.hashString(preHashingString + nonce);
+            if (parallel && Thread.currentThread().isInterrupted()){
+                throw new InterruptedException("Mining interrupted");
+            }
         }
-        blocks.addNewBlock(new Block(prevBlockHash, timestamp, nonce, difficultyTarget, transactions));
+        if (parallel && Thread.currentThread().isInterrupted()){
+            throw new InterruptedException("Mining interrupted");
+        }
+        return new Block(prevBlockHash, timestamp, nonce, difficultyTarget, transactions);
+    }
+
+    public void verifyBlock(Block newBlock){
+        if (!newBlock.getBlockHash().startsWith("000")){
+            throw new IllegalArgumentException("New block hash do not achieve difficulty target");
+        }
+
+        blocks.addNewBlock(newBlock);
         // create UTXO and delete made tx from mempool
         int i = 0;
+        List<Transaction> transactions = newBlock.getTransactions();
         for (Transaction madeTx : transactions){
             if (i > 0){
                 mempool.deleteTx(madeTx.getTxid());
@@ -73,17 +126,18 @@ public class Blockchain {
                 counter++;
             }
         }
+
         //-------------------------------
         StringJoiner blockPrintScreen = new StringJoiner(System.lineSeparator());
         blockPrintScreen.add("-".repeat(80));
         blockPrintScreen.add("Block info:");
         blockPrintScreen.add("Block number:        " + blocks.getBlocksNumber());
-        blockPrintScreen.add("Block hash:          " + blockHash);
-        blockPrintScreen.add("Previous block hash: " + prevBlockHash);
-        blockPrintScreen.add("Timestamp:           " + timestamp);
-        blockPrintScreen.add("Nonce:               " + nonce);
-        blockPrintScreen.add("Difficulty target:   " + difficultyTarget);
-        blockPrintScreen.add("Transactions hash:   " + txHash);
+        blockPrintScreen.add("Block hash:          " + newBlock.getBlockHash());
+        blockPrintScreen.add("Previous block hash: " + newBlock.getPrevBlockHash());
+        blockPrintScreen.add("Timestamp:           " + newBlock.getTimestamp());
+        blockPrintScreen.add("Nonce:               " + newBlock.getNonce());
+        blockPrintScreen.add("Difficulty target:   " + newBlock.getDifficultyTarget());
+        blockPrintScreen.add("Transactions hash:   " + newBlock.getTxHash());
         blockPrintScreen.add("List of transactions:");
         int counter = 0;
         for (Transaction tx : transactions){
@@ -202,5 +256,21 @@ public class Blockchain {
         while (mempool.getTxNumber() > 0){
             mineBlock(satoshi);
         }
+    }
+
+    public void autoMiningParallel(){
+        List<String> addresses = new ArrayList<>();
+        addresses.add(users.getAddress("Satoshi Nakamoto"));
+        addresses.add(users.getAddress("User1"));
+        addresses.add(users.getAddress("User2"));
+        addresses.add(users.getAddress("User3"));
+        addresses.add(users.getAddress("User4"));
+        while (mempool.getTxNumber() > 0){
+            mineBlock(addresses);
+        }
+    }
+
+    public String getUserAddress(String username) {
+        return users.getAddress(username);
     }
 }

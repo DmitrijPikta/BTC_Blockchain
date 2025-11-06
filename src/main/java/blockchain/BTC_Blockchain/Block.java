@@ -4,14 +4,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Block {
-    String prevBlockHash;
-    String timestamp;
-    String version = "v1.0";
-    String txHash;
-    int nonce;
-    int difficultyTarget;
+    private String prevBlockHash;
+    private String timestamp;
+    private String version = "v1.0";
+    private String txHash;
+    private int nonce;
+    private int difficultyTarget;
 
-    List<Transaction> transactions = new ArrayList<>();
+    private List<Transaction> transactions = new ArrayList<>();
 
     public Block(String prevBlockHash, String timestamp, int nonce, int difficultyTarget, List<Transaction> transactions){
         if (difficultyTarget < 0){
@@ -43,5 +43,33 @@ public class Block {
     public String getBlockHash() {
         HashFunction hashFunction = new HashFunction();
         return hashFunction.hashString(prevBlockHash + timestamp + version + txHash + difficultyTarget + nonce);
+    }
+
+    public List<Transaction> getTransactions(){
+        return new ArrayList<>(transactions);
+    }
+
+    public String getPrevBlockHash() {
+        return prevBlockHash;
+    }
+
+    public int getDifficultyTarget() {
+        return difficultyTarget;
+    }
+
+    public int getNonce() {
+        return nonce;
+    }
+
+    public String getTimestamp() {
+        return timestamp;
+    }
+
+    public String getTxHash() {
+        return txHash;
+    }
+
+    public String getVersion() {
+        return version;
     }
 }
