@@ -28,21 +28,23 @@ public class Blockchain {
 
         List<Transaction> transactions = mempool.getTx(txInBlock - 1);
 
-        StringBuilder transactionsSummary = new StringBuilder();
+        //StringBuilder transactionsSummary = new StringBuilder();
         long fee = 0;
         for (Transaction tx : transactions){
             fee += tx.getFee();
-            transactionsSummary.append(tx.getTxid());
+            //transactionsSummary.append(tx.getTxid());
         }
         // create tx for miner reward
         List<TxOutput> minerOutput = new ArrayList<>();
         minerOutput.add(new TxOutput(minerAddress, fee + blockReward));
         List<TxInput> minerInputs = new ArrayList<>();
         transactions.addFirst(new Transaction(minerInputs, minerOutput, "0"));
-        transactionsSummary.insert(0, transactions.getFirst().getTxid());
+        //transactionsSummary.insert(0, transactions.getFirst().getTxid());
 
         HashFunction hashFunction = new HashFunction();
-        String txHash = hashFunction.hashString(transactionsSummary.toString());
+        //String txHash = hashFunction.hashString(transactionsSummary.toString());
+        MerkleTree merkleTree = new MerkleTree();
+        String txHash = merkleTree.getRootHash(transactions);
         String prevBlockHash = blocks.getLastBlockHash();
         String timestamp = Instant.now().toString();
         String version = "v1.0";
