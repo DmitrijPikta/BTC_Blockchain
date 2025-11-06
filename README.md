@@ -43,6 +43,24 @@ autoMining method created new blocks for blockchain, until mempool do not have t
 2. Implemented inputs and outputs 
 3. Implemeted block reward and transactions fee for miner
 4. Implemented user address creating be hashing public key
-5. Implemented BTC transformation to Satoshi for storing in blockchain and inside countings 
+5. Implemented BTC transformation to Satoshi for storing in blockchain and inside countings
+
+# BTC Blockchain v0.1
+## What is new?
+1. Implemented Merkle Tree from transactions root hash counting in block
+2. Implemented parallel mining.
+```
+public void mineBlock(List<String> addresses)
+```
+This method mimne block parallel in all addresses from list.
+
+```
+public void autoMiningParallel()
+```
+This method created new blocks for blockchain parallel (5 users are using like miners), until mempool do not have transactions.
+
+## AI usage
+AI was using in this project for learning goals. To learn how BTC Blockchain is designed and how it works.
+
 
 
