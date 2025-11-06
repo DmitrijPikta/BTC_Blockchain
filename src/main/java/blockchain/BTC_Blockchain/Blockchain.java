@@ -62,7 +62,7 @@ public class Blockchain {
         verifyBlock(minedBlock);
     }
 
-    public Block getBlock(String minerAddress, boolean parallel) throws InterruptedException {
+    private Block getBlock(String minerAddress, boolean parallel) throws InterruptedException {
         if (!users.contains(minerAddress)){
             throw new IllegalArgumentException("Miner address is wrong: where are no such address");
         }
@@ -78,7 +78,6 @@ public class Blockchain {
         minerOutput.add(new TxOutput(minerAddress, fee + blockReward));
         List<TxInput> minerInputs = new ArrayList<>();
         transactions.addFirst(new Transaction(minerInputs, minerOutput, "0"));
-
 
         HashFunction hashFunction = new HashFunction();
         MerkleTree merkleTree = new MerkleTree();

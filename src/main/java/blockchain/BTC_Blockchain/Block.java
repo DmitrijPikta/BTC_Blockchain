@@ -18,12 +18,7 @@ public class Block {
             throw new IllegalArgumentException("Difficulty target can not be negative");
         }
 
-        /*StringBuilder transactionsSummary = new StringBuilder();
-        for (Transaction tx : transactions){
-            transactionsSummary.append(tx.getTxid());
-        }*/
         HashFunction hashFunction = new HashFunction();
-        //txHash = hashFunction.hashString(transactionsSummary.toString());
         MerkleTree merkleTree = new MerkleTree();
         txHash = merkleTree.getRootHash(transactions);
         String hashingString = prevBlockHash + timestamp + version + txHash + difficultyTarget + nonce;
